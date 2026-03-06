@@ -64,3 +64,15 @@ export function notnull(name: string): Expression;
 // Sort operators
 export function desc(name: string): SortBuilder;
 export function asc(name: string): SortBuilder;
+
+// Filter builder types
+export type FilterRule<T = any> = (value: T, form: any) => Expression | Expression[];
+
+export interface FilterRules {
+    [key: string]: FilterRule;
+    default?: (form: any) => Expression | undefined;
+}
+
+// Filter builder functions
+export function buildFilter(rules: FilterRules, form: any, ...extraConditions: (Expression | null | undefined)[]): string;
+export function buildFilterExpression(rules: FilterRules, form: any, ...extraConditions: (Expression | null | undefined)[]): Expression | undefined;

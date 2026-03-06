@@ -161,6 +161,10 @@ class SingleExpression {
         }
         return `(${this._name} ${this._operator} ${this._value})`
     }
+
+    toJSON() {
+        return and(this).build();
+    }
 }
 
 class ComplexExpression {
@@ -179,6 +183,10 @@ class ComplexExpression {
 
     build() {
         return `(${this._condition}${(this._expressions?.map(it => it.build()).join(""))})`
+    }
+
+    toJSON() {
+        return this.build();
     }
 
     static or(expressions) {
@@ -218,4 +226,51 @@ class SoftField {
     }
 }
 
-export { Query, SingleExpression, and, asc, between, contains, desc, endsWith, equals, greaterThan, greaterThanOrEquals, isIn, isnull, lessThan, lessThanOrEquals, notEquals, notIn, notnull, or, startsWith };
+function buildFilter(rules, form, ...extraConditions) {
+  let expression = buildFilterExpression(rules, form, ...extraConditions);
+  if (expression === undefined) {
+    return "";
+  }
+  return expression.build();
+}
+
+function buildFilterExpression(rules, form, ...extraConditions) {
+  function hasAnyValue(key) {
+    if (typeof form[key] === "boolean") {
+      return form[key] !== undefined;
+    }
+    if (typeof form[key] === "string") {
+      return form[key] !== undefined && form[key] !== "" && form[key] !== null;
+    }
+    return (!Array.isArray(form[key]) && form[key]) || (Array.isArray(form[key]) && form[key].length > 0);
+  }
+
+  let conditions = Object.keys(form)
+    .filter(key => hasAnyValue(key))
+    .filter(key => rules[key])
+    .map(key => {
+      return rules[key](form[key], form);
+    })
+    .flat();
+
+  if (rules.default) {
+    const defaultCondition = rules.default(form);
+    if (defaultCondition) {
+      conditions.push(defaultCondition);
+    }
+  }
+
+  if (!extraConditions) {
+    extraConditions = [];
+  }
+  extraConditions = extraConditions.filter(condition => condition);
+  if (conditions.length == 0) {
+    if (extraConditions.length > 0) {
+      return and(...extraConditions);
+    }
+    return undefined;
+  }
+  return and(...conditions, ...extraConditions);
+}
+
+export { Query, SingleExpression, and, asc, between, buildFilter, buildFilterExpression, contains, desc, endsWith, equals, greaterThan, greaterThanOrEquals, isIn, isnull, lessThan, lessThanOrEquals, notEquals, notIn, notnull, or, startsWith };

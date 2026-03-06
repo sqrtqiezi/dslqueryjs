@@ -1,6 +1,6 @@
 import {and} from "./DslQueryBuilder";
 
-export function buildFilter(rules: any, form: any, ...extraConditions: any[]) {
+export function buildFilter(rules, form, ...extraConditions) {
   let expression = buildFilterExpression(rules, form, ...extraConditions);
   if (expression === undefined) {
     return "";
@@ -8,8 +8,8 @@ export function buildFilter(rules: any, form: any, ...extraConditions: any[]) {
   return expression.build();
 }
 
-export function buildFilterExpression(rules: any, form: any, ...extraConditions: any[]) {
-  function hasAnyValue(key: string) {
+export function buildFilterExpression(rules, form, ...extraConditions) {
+  function hasAnyValue(key) {
     if (typeof form[key] === "boolean") {
       return form[key] !== undefined;
     }
@@ -37,7 +37,7 @@ export function buildFilterExpression(rules: any, form: any, ...extraConditions:
   if (!extraConditions) {
     extraConditions = [];
   }
-  extraConditions = extraConditions.filter((condition: any) => condition)
+  extraConditions = extraConditions.filter(condition => condition)
   if (conditions.length == 0) {
     if (extraConditions.length > 0) {
       return and(...extraConditions);
