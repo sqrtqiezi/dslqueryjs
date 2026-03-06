@@ -230,6 +230,226 @@ equals("name", "test()")           // (name eq test%28%29)
 isIn("tags", ["a+b", "c&d"])       // (tags in %5B"a%2Bb","c%26d"%5D)
 ```
 
+### 表单过滤器构建（buildFilter）
+
+`buildFilter` 是一个实用工具函数，用于根据表单数据和规则自动构建过滤条件，特别适合处理搜索表单。
+
+#### 基本用法
+
+```javascript
+import { buildFilter, equals, contains, greaterThan } from 'dslquery';
+
+// 定义过滤规则
+// 规则函数接收两个参数：(当前字段值, 整个表单对象)
+const rules = {
+  name: (value, form) => contains("name", value),
+  age: (value, form) => greaterThan("age", value),
+  status: (value, form) => equals("status", value)
+};
+
+// 表单数据
+const form = {
+  name: "张三",
+  age: "18",
+  status: "active"
+};
+
+// 构建过滤条件
+const filter = buildFilter(rules, form);
+console.log(filter);
+// 输出: (and(name ct 张三)(age gt 18)(status eq active))
+```
+
+#### 自动过滤空值
+
+`buildFilter` 会自动忽略空值、空字符串、null、undefined 和空数组：
+
+```javascript
+const rules = {
+  name: (value, form) => equals("name", value),
+  age: (value, form) => greaterThan("age", value)
+};
+
+const form = {
+  name: "",        // 空字符串，会被忽略
+  age: "18",
+  email: null      // null，会被忽略
+};
+
+const filter = buildFilter(rules, form);
+console.log(filter);
+// 输出: (and(age gt 18))
+```
+
+#### 布尔值处理
+
+布尔值会被正确处理，包括 `false`：
+
+```javascript
+const rules = {
+  active: (value, form) => equals("active", value)
+};
+
+const form = {
+  active: false  // false 会被保留
+};
+
+const filter = buildFilter(rules, form);
+console.log(filter);
+// 输出: (and(active eq false))
+```
+
+#### 默认条件
+
+使用 `default` 字段可以添加始终存在的条件：
+
+```javascript
+const rules = {
+  name: (value) => contains("name", value),
+  default: (form) => equals("deletedAt", null)  // 始终添加此条件
+};
+
+const form = {
+  name: "张三"
+};
+
+const filter = buildFilter(rules, form);
+console.log(filter);
+// 输出: (and(name ct 张三)(deletedAt eq null))
+```
+
+#### 额外条件
+
+可以传入额外的条件表达式：
+
+```javascript
+const rules = {
+  name: (value, form) => contains("name", value)
+};
+
+const form = {
+  name: "张三"
+};
+
+const extraCondition = equals("tenantId", "123");
+
+const filter = buildFilter(rules, form, extraCondition);
+console.log(filter);
+// 输出: (and(name ct 张三)(tenantId eq 123))
+```
+
+#### 多条件规则
+
+规则函数可以返回数组，用于一个字段生成多个条件：
+
+```javascript
+const rules = {
+  search: (value, form) => [
+    contains("name", value),
+    contains("email", value),
+    contains("phone", value)
+  ]
+};
+
+const form = {
+  search: "test"
+};
+
+const filter = buildFilter(rules, form);
+console.log(filter);
+// 输出: (and(name ct test)(email ct test)(phone ct test))
+```
+
+#### 访问完整表单数据
+
+规则函数的第二个参数是完整的表单对象，可用于条件判断：
+
+```javascript
+const rules = {
+  name: (value, form) => {
+    // 根据 exactMatch 字段决定使用精确匹配还是模糊匹配
+    if (form.exactMatch) {
+      return equals("name", value);
+    }
+    return contains("name", value);
+  }
+};
+
+const form = {
+  name: "张三",
+  exactMatch: true
+};
+
+const filter = buildFilter(rules, form);
+console.log(filter);
+// 输出: (and(name eq 张三))
+```
+
+#### buildFilterExpression
+
+如果需要获取表达式对象而不是字符串，可以使用 `buildFilterExpression`：
+
+```javascript
+import { buildFilterExpression, equals } from 'dslquery';
+
+const rules = {
+  name: (value, form) => equals("name", value)
+};
+
+const form = {
+  name: "test"
+};
+
+const expression = buildFilterExpression(rules, form);
+console.log(expression.build());  // (and(name eq test))
+
+// 可以与 Query 一起使用
+const query = new Query()
+  .withFilter(expression)
+  .withLimit(10);
+```
+
+#### 完整示例：搜索表单
+
+```javascript
+import { Query, buildFilter, equals, contains, greaterThan,
+         lessThan, isIn, desc } from 'dslquery';
+
+// 定义搜索规则
+const searchRules = {
+  keyword: (value, form) => [
+    contains("name", value),
+    contains("description", value)
+  ],
+  minPrice: (value, form) => greaterThan("price", value),
+  maxPrice: (value, form) => lessThan("price", value),
+  category: (value, form) => equals("category", value),
+  tags: (value, form) => isIn("tags", value),
+  default: (form) => equals("status", "active")  // 只显示激活的商品
+};
+
+// 用户提交的表单数据
+const searchForm = {
+  keyword: "手机",
+  minPrice: "1000",
+  maxPrice: "",      // 空值会被忽略
+  category: "电子产品",
+  tags: []           // 空数组会被忽略
+};
+
+// 额外的租户隔离条件
+const tenantCondition = equals("tenantId", "tenant-123");
+
+// 构建查询
+const query = new Query()
+  .withLimit(20)
+  .withFilter(buildFilterExpression(searchRules, searchForm, tenantCondition))
+  .withSort(desc("createdAt"));
+
+console.log(query.filter);
+// (and(name ct 手机)(description ct 手机)(price gt 1000)(category eq 电子产品)(status eq active)(tenantId eq tenant-123))
+```
+
 ## 开发
 
 ```bash

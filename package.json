@@ -1,11 +1,11 @@
 {
   "name": "dslquery",
-  "version": "4.5.7",
+  "version": "4.6.0",
   "description": "",
   "main": "./dist/library.js",
   "scripts": {
     "test": "vitest tests/*.test.js",
-    "build": "rollup -c rollup.config.js"
+    "build": "rollup -c rollup.config.js && cp src/dslquery.d.ts dist/dslquery.d.ts"
   },
   "repository": {
     "type": "git",
@@ -15,8 +15,15 @@
     "dsl",
     "query"
   ],
-  "types": "./src/dslquery.d.ts",
+  "types": "./dist/dslquery.d.ts",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/dslquery.d.ts",
+      "import": "./dist/library.js",
+      "default": "./dist/library.js"
+    }
+  },
   "dependencies": {
     "@esbuild/darwin-arm64": "^0.18.11",
     "rollup": "^3.26.0",

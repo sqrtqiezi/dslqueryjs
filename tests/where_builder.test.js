@@ -1,14 +1,23 @@
 import {
-    and, between, contains, endsWith,
+    and,
+    between,
+    contains,
+    endsWith,
     equals,
     greaterThan,
-    greaterThanOrEquals, isIn, isnull,
+    greaterThanOrEquals,
+    isIn,
+    isnull,
     lessThan,
     lessThanOrEquals,
-    notEquals, notIn, notnull,
-    or, startsWith
+    notEquals,
+    notIn,
+    notnull,
+    or,
+    startsWith
 } from "@/DslQueryBuilder";
-import {describe,it,expect} from "vitest";
+import {describe, expect, it} from "vitest";
+
 describe('dsl builder test', function () {
     it('should build empty with and', function () {
         expect(and().build()).toEqual("(and)")
@@ -17,7 +26,24 @@ describe('dsl builder test', function () {
     it('should build empty with or', function () {
         expect(or().build()).toEqual("(or)")
     });
+
     it('should build with equals', function () {
+        expect(and(equals("name", "123")).build()).toEqual("(and(name eq 123))")
+    });
+    it('自动Json', () => {
+        const params = {
+            filter:and(equals("name", "123"))
+        }
+        expect(JSON.stringify(params)).toEqual("{\"filter\":\"(and(name eq 123))\"}")
+    });
+    it('自动Json，忘了带and/or', () => {
+        const params = {
+            filter:equals("name", "123")
+        }
+        expect(JSON.stringify(params)).toEqual("{\"filter\":\"(and(name eq 123))\"}")
+    });
+
+    it('缺省没有Build', function () {
         expect(and(equals("name", "123")).build()).toEqual("(and(name eq 123))")
     });
     it('should build with equals contains special char', function () {

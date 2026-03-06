@@ -101,6 +101,10 @@ export class SingleExpression {
         }
         return `(${this._name} ${this._operator} ${this._value})`
     }
+
+    toJSON() {
+        return and(this).build();
+    }
 }
 
 class ComplexExpression {
@@ -119,6 +123,10 @@ class ComplexExpression {
 
     build() {
         return `(${this._condition}${(this._expressions?.map(it => it.build()).join(""))})`
+    }
+
+    toJSON() {
+        return this.build();
     }
 
     static or(expressions) {
