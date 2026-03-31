@@ -1,0 +1,13 @@
+{
+  "name": "dslquery",
+  "version": "4.6.0",
+  "description": "DSL query builder skill for JavaScript/TypeScript projects using the dslquery library",
+  "author": {
+    "name": "njin"
+  },
+  "homepage": "https://github.com/sqrtqiezi/dslqueryjs",
+  "repository": "https://github.com/sqrtqiezi/dslqueryjs",
+  "license": "MIT",
+  "keywords": ["dsl", "query", "filter", "pagination", "sorting", "javascript", "typescript"],
+  "skills": "./skills/"
+}

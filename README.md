@@ -8,6 +8,26 @@
 npm install dslquery
 ```
 
+## Claude Code Plugin 安装
+
+如果你使用 Claude Code，可以安装 dslquery skill 来获得 AI 辅助的 DSL 查询构建支持。
+
+### 添加 marketplace
+
+```bash
+claude plugin marketplace add sqrtqiezi/dslqueryjs
+```
+
+### 安装 plugin
+
+```bash
+claude plugin install dslquery
+```
+
+### 使用
+
+安装后，在 Claude Code 中可以使用 `/dslquery` skill 来获取 DSL 查询构建的帮助和示例。
+
 ## 功能特性
 
 - 🔍 丰富的查询条件构建器（等于、大于、小于、包含等）
